@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BackgroundRecorder" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/md_theme_light_primary</item>
+        <item name="android:colorSecondary">@color/md_theme_light_secondary</item>
+        <item name="android:colorBackground">@color/md_theme_light_background</item>
+        <item name="android:colorError">@color/md_theme_light_error</item>
+        <item name="android:statusBarColor">@color/md_theme_light_background</item>
+        <item name="android:navigationBarColor">@color/md_theme_light_background</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

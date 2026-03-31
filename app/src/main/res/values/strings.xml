@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name and Description -->
+    <string name="app_name">Background Recorder by AP</string>
+    <string name="app_description">Record videos, audio, and photos in the background</string>
+
+    <!-- Main Screen -->
+    <string name="home_title">Background Recorder by AP</string>
+    <string name="recording_mode">Recording Mode</string>
+    <string name="video_recording">Video Recording</string>
+    <string name="audio_recording">Audio Recording</string>
+    <string name="photo_taking">Photo (Picture Taking)</string>
+
+    <!-- Video Settings -->
+    <string name="video_settings">Video Settings</string>
+    <string name="video_resolution">Resolution</string>
+    <string name="video_fps">FPS</string>
+    <string name="camera_selection">Camera</string>
+    <string name="focus_mode">Focus</string>
+    <string name="zoom_level">Zoom Level</string>
+
+    <!-- Photo Settings -->
+    <string name="photo_settings">Photo Settings</string>
+    <string name="photo_megapixel">Megapixel</string>
+    <string name="photo_interval">Interval</string>
+
+    <!-- Audio Settings -->
+    <string name="audio_settings">Audio Settings</string>
+    <string name="audio_bitrate">Bitrate</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings</string>
+    <string name="app_theme">App Theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dynamic_color">Dynamic Color (Material You)</string>
+    <string name="amoled_dark_mode">AMOLED Dark Mode</string>
+
+    <!-- Security -->
+    <string name="security">Security</string>
+    <string name="biometric_lock">Biometric Lock</string>
+    <string name="biometric_description">Requires biometric authentication to enter the app</string>
+
+    <!-- Developer Info -->
+    <string name="about_developer">About Developer</string>
+    <string name="developer_name">Developer: AP</string>
+    <string name="developer_email">Email: ap0803apap@gmail.com</string>
+    <string name="developer_github">GitHub: View Source Code</string>
+    <string name="version">Background Recorder v1.0.0</string>
+
+    <!-- Buttons -->
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Messages -->
+    <string name="recording_started">Recording started</string>
+    <string name="recording_stopped">Recording stopped</string>
+    <string name="recording_in_progress">Recording in progress...</string>
+    <string name="unlock_app">Unlock Background Recorder</string>
+    <string name="unlock_description">Use your biometric to unlock</string>
+</resources>
