@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -100,7 +101,7 @@ fun HomeScreen(
                 title = { Text("Background Recorder") },
                 actions = {
                     IconButton(onClick = { showHelpDialog = true }) {
-                        Icon(Icons.Default.HelpOutline, contentDescription = "Help")
+                        Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help")
                     }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
@@ -312,7 +313,7 @@ fun RecordingItem(file: File, onDelete: (File) -> Unit, onSave: () -> Unit) {
                         },
                         leadingIcon = { Icon(Icons.Default.Save, contentDescription = null) }
                     )
-                    Divider()
+                    HorizontalDivider()
                     DropdownMenuItem(
                         text = { Text("Delete", color = Color.Red) },
                         onClick = {
