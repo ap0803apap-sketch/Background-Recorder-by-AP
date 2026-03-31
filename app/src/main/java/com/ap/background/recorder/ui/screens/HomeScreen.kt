@@ -7,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -61,7 +62,7 @@ fun HomeScreen(
             onDismissRequest = { showHelpDialog = false },
             title = { Text("How to Use") },
             text = {
-                Column(modifier = Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     HelpItem("1. Start/Stop", "Use the floating button or the Stop button on the home screen.")
                     HelpItem("2. Background Trigger", "Go to Device Settings > Default Apps > Digital Assistant and select this app. Now long-pressing the power/home button will toggle recording silently.")
                     HelpItem("3. Quick Settings", "Add the 'Background Recorder' tile to your notification panel for one-tap recording.")
