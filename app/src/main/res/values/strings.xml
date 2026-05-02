@@ -45,7 +45,7 @@
     <string name="developer_name">Developer: AP</string>
     <string name="developer_email">Email: ap0803apap@gmail.com</string>
     <string name="developer_github">GitHub: View Source Code</string>
-    <string name="version">Background Recorder v1.0.0</string>
+    <string name="version">Background Recorder v2.0.0</string>
 
     <!-- Buttons -->
     <string name="back">Back</string>

@@ -17,12 +17,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.ap.background.recorder.data.RecorderPreferences
 import com.ap.background.recorder.services.RecordingService
+import com.ap.background.recorder.services.ShakeTriggerService
+import com.ap.background.recorder.services.SmsTriggerService
 import com.ap.background.recorder.ui.screens.HomeScreen
 import com.ap.background.recorder.ui.screens.SettingsScreen
 import com.ap.background.recorder.ui.screens.SplashBiometricScreen
 import com.ap.background.recorder.ui.screens.TermsScreen
 import com.ap.background.recorder.ui.theme.BackgroundRecorderTheme
 import com.ap.background.recorder.utils.PermissionManager
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -46,6 +49,16 @@ class MainActivity : FragmentActivity() {
         // Request permissions on start
         permissionManager.requestRecordingPermissions(this) {
             // Permissions granted
+        }
+
+        // Start Trigger services if enabled
+        lifecycleScope.launch {
+            if (prefs.shakeTriggerEnabledFlow.first()) {
+                startForegroundService(Intent(this@MainActivity, ShakeTriggerService::class.java))
+            }
+            if (prefs.smsTriggerEnabledFlow.first()) {
+                startForegroundService(Intent(this@MainActivity, SmsTriggerService::class.java))
+            }
         }
 
         setContent {

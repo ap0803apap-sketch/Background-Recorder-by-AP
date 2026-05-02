@@ -27,12 +27,36 @@ class RecorderPreferences(private val context: Context) {
         val PHOTO_MEGAPIXEL = intPreferencesKey("photo_megapixel")
         val PHOTO_INTERVAL = intPreferencesKey("photo_interval")
         val AUDIO_BITRATE = intPreferencesKey("audio_bitrate")
+
+        // Trigger Settings
+        val IS_SHAKE_TRIGGER_ENABLED = booleanPreferencesKey("is_shake_trigger_enabled")
+        val IS_SHAKE_TOGGLE_OFF_ENABLED = booleanPreferencesKey("is_shake_toggle_off_enabled")
+        val IS_SMS_TRIGGER_ENABLED = booleanPreferencesKey("is_sms_trigger_enabled")
+        val IS_SMS_TOGGLE_OFF_ENABLED = booleanPreferencesKey("is_sms_toggle_off_enabled")
+        val SMS_TRIGGER_TYPE = stringPreferencesKey("sms_trigger_type") // "CUSTOM", "CODE"
+        val SMS_TRIGGER_TEXT = stringPreferencesKey("sms_trigger_text")
+        val IS_TIME_TRIGGER_ENABLED = booleanPreferencesKey("is_time_trigger_enabled")
+        val TIME_TRIGGERS_JSON = stringPreferencesKey("time_triggers_json")
+        val SHAKE_INTENSITY = floatPreferencesKey("shake_intensity")
         
         // Front Camera Specific Settings
         val FRONT_VIDEO_RESOLUTION = stringPreferencesKey("front_video_resolution")
         val FRONT_VIDEO_FPS = intPreferencesKey("front_video_fps")
         val FRONT_PHOTO_QUALITY = intPreferencesKey("front_photo_quality")
     }
+
+    val audioBitrateFlow: Flow<Int> = context.dataStore.data.map { it[AUDIO_BITRATE] ?: 128 }
+    
+    // Trigger Flows
+    val shakeTriggerEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_SHAKE_TRIGGER_ENABLED] ?: false }
+    val shakeToggleOffFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_SHAKE_TOGGLE_OFF_ENABLED] ?: false }
+    val smsTriggerEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_SMS_TRIGGER_ENABLED] ?: false }
+    val smsToggleOffFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_SMS_TOGGLE_OFF_ENABLED] ?: false }
+    val smsTriggerTypeFlow: Flow<String> = context.dataStore.data.map { it[SMS_TRIGGER_TYPE] ?: "CUSTOM" }
+    val smsTriggerTextFlow: Flow<String> = context.dataStore.data.map { it[SMS_TRIGGER_TEXT] ?: "" }
+    val timeTriggerEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_TIME_TRIGGER_ENABLED] ?: false }
+    val timeTriggersJsonFlow: Flow<String> = context.dataStore.data.map { it[TIME_TRIGGERS_JSON] ?: "[]" }
+    val shakeIntensityFlow: Flow<Float> = context.dataStore.data.map { it[SHAKE_INTENSITY] ?: 50f }
 
     val themeModeFlow: Flow<String> = context.dataStore.data.map { it[THEME_MODE] ?: "SYSTEM" }
     val dynamicColorFlow: Flow<Boolean> = context.dataStore.data.map { it[IS_DYNAMIC_COLOR] ?: true }
@@ -113,6 +137,52 @@ class RecorderPreferences(private val context: Context) {
     suspend fun getAudioBitrate(): Int = context.dataStore.data.map { it[AUDIO_BITRATE] ?: 128 }.first()
     suspend fun setAudioBitrate(bitrate: Int) {
         context.dataStore.edit { preferences -> preferences[AUDIO_BITRATE] = bitrate }
+    }
+
+    // Trigger Methods
+    suspend fun isShakeTriggerEnabled(): Boolean = shakeTriggerEnabledFlow.first()
+    suspend fun setShakeTriggerEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[IS_SHAKE_TRIGGER_ENABLED] = enabled }
+    }
+    
+    suspend fun isShakeToggleOffEnabled(): Boolean = shakeToggleOffFlow.first()
+    suspend fun setShakeToggleOffEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[IS_SHAKE_TOGGLE_OFF_ENABLED] = enabled }
+    }
+
+    suspend fun isSmsTriggerEnabled(): Boolean = smsTriggerEnabledFlow.first()
+    suspend fun setSmsTriggerEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[IS_SMS_TRIGGER_ENABLED] = enabled }
+    }
+    
+    suspend fun isSmsToggleOffEnabled(): Boolean = smsToggleOffFlow.first()
+    suspend fun setSmsToggleOffEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[IS_SMS_TOGGLE_OFF_ENABLED] = enabled }
+    }
+
+    suspend fun getSmsTriggerType(): String = smsTriggerTypeFlow.first()
+    suspend fun setSmsTriggerType(type: String) {
+        context.dataStore.edit { it[SMS_TRIGGER_TYPE] = type }
+    }
+
+    suspend fun getSmsTriggerText(): String = smsTriggerTextFlow.first()
+    suspend fun setSmsTriggerText(text: String) {
+        context.dataStore.edit { it[SMS_TRIGGER_TEXT] = text }
+    }
+
+    suspend fun isTimeTriggerEnabled(): Boolean = timeTriggerEnabledFlow.first()
+    suspend fun setTimeTriggerEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[IS_TIME_TRIGGER_ENABLED] = enabled }
+    }
+
+    suspend fun getTimeTriggersJson(): String = timeTriggersJsonFlow.first()
+    suspend fun setTimeTriggersJson(json: String) {
+        context.dataStore.edit { it[TIME_TRIGGERS_JSON] = json }
+    }
+
+    suspend fun getShakeIntensity(): Float = shakeIntensityFlow.first()
+    suspend fun setShakeIntensity(intensity: Float) {
+        context.dataStore.edit { it[SHAKE_INTENSITY] = intensity }
     }
     
     // Front Camera Methods

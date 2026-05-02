@@ -70,9 +70,16 @@ class RecordingService : LifecycleService() {
             return START_NOT_STICKY
         }
 
+        val allowToggle = intent.getBooleanExtra("allow_toggle", true)
+
         if (currentAction == action) {
-            stopRecording()
-            return START_NOT_STICKY
+            if (allowToggle) {
+                stopRecording()
+                return START_NOT_STICKY
+            } else {
+                // Already recording this, and toggle not allowed, so just ignore or update notification
+                return START_STICKY
+            }
         }
 
         if (currentAction != null) {

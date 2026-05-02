@@ -2,8 +2,12 @@ package com.ap.background.recorder.utils
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.permissionx.guolindev.PermissionX
@@ -29,7 +33,7 @@ class PermissionManager(private val context: Context) {
             )
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
@@ -89,6 +93,62 @@ class PermissionManager(private val context: Context) {
             ) == PackageManager.PERMISSION_GRANTED
         } else {
             true
+        }
+    }
+
+    fun hasSmsPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECEIVE_SMS
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun requestSmsPermission(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
+        PermissionX.init(activity)
+            .permissions(Manifest.permission.RECEIVE_SMS)
+            .onExplainRequestReason { scope, deniedList ->
+                scope.showRequestReasonDialog(
+                    deniedList,
+                    "SMS permission is required to trigger recording via text message",
+                    "OK",
+                    "Cancel"
+                )
+            }
+            .request { allGranted, _, _ ->
+                onResult(allGranted)
+            }
+    }
+
+    fun isBatteryOptimizationIgnored(): Boolean {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    fun requestIgnoreBatteryOptimizations(activity: FragmentActivity) {
+        if (!isBatteryOptimizationIgnored()) {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:${context.packageName}")
+                }
+                activity.startActivity(intent)
+            } catch (e: Exception) {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                activity.startActivity(intent)
+            }
+        }
+    }
+
+    fun canDrawOverlays(): Boolean {
+        return Settings.canDrawOverlays(context)
+    }
+
+    fun requestOverlayPermission(activity: FragmentActivity) {
+        if (!canDrawOverlays()) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${context.packageName}")
+            )
+            activity.startActivity(intent)
         }
     }
 }

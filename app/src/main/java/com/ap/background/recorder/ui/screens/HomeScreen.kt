@@ -1,8 +1,9 @@
 package com.ap.background.recorder.ui.screens
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,7 +28,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ap.background.recorder.data.RecorderPreferences
 import com.ap.background.recorder.services.RecordingService
+import com.ap.background.recorder.services.FileExportService
 import com.ap.background.recorder.utils.FileManager
+import com.ap.background.recorder.utils.PermissionManager
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
@@ -42,6 +45,7 @@ fun HomeScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val fileManager = remember { FileManager(context) }
+    val permissionManager = remember { PermissionManager(context) }
     
     val recordingMode by prefs.recordingModeFlow.collectAsStateWithLifecycle(initialValue = "VIDEO")
     val cameraSelection by prefs.cameraSelectionFlow.collectAsStateWithLifecycle(initialValue = "PRIMARY")
@@ -61,15 +65,50 @@ fun HomeScreen(
     if (showHelpDialog) {
         AlertDialog(
             onDismissRequest = { showHelpDialog = false },
-            title = { Text("How to Use") },
+            title = { Text("How to Use Background Recorder") },
             text = {
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    HelpItem("1. Start/Stop", "Use the floating button or the Stop button on the home screen.")
-                    HelpItem("2. Background Trigger", "Go to Device Settings > Default Apps > Digital Assistant and select this app. Now long-pressing the power/home button will toggle recording silently.")
-                    HelpItem("3. Quick Settings", "Add the 'Background Recorder' tile to your notification panel for one-tap recording.")
-                    HelpItem("4. Silent Mode", "Assistant and Tile methods start recording without opening the app UI.")
-                    HelpItem("5. Multiple Cameras", "Cycle between Primary, Secondary (Ultrawide), and Front cameras using the 'Cam' chip.")
-                    HelpItem("6. Export", "Recordings are private. Use 'Save to Downloads' in the file menu to make them visible in your Gallery.")
+                    HelpItem("🚀 Getting Started", "Use the 'Start' and 'Stop' buttons in the Quick Controls card to manage recordings directly from the app.")
+                    
+                    HelpItem("🔇 Stealth Recording", "Go to Device Settings > Apps > Default Apps > Digital Assistant and choose this app. You can then trigger recording silently by long-pressing the power or home button.")
+                    
+                    HelpItem("⚡ Quick Access", "Pull down your notification panel and add the 'Background Recorder' tile. This allows you to start/stop recording instantly from any screen.")
+                    
+                    HelpItem("📳 Shake Trigger", "Enable 'Shake to Trigger' in Settings. You can adjust the intensity and even set it to stop recording on a second shake.")
+                    
+                    HelpItem("📩 SMS Trigger", "Control the recorder remotely by sending an SMS with your custom text or generated 64-digit code.")
+                    
+                    HelpItem("⏰ Time-Based Trigger", "Schedule one-time or duration-based recordings. Set multiple triggers to automate your capturing needs.")
+                    
+                    HelpItem("🔋 Battery Optimization", "To ensure triggers work reliably in the background, click 'Disable Optimization' below to give the app unrestricted battery access.")
+                    
+                    Button(
+                        onClick = { 
+                            (context as? androidx.fragment.app.FragmentActivity)?.let { 
+                                permissionManager.requestIgnoreBatteryOptimizations(it) 
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        enabled = !permissionManager.isBatteryOptimizationIgnored()
+                    ) {
+                        Text(if (permissionManager.isBatteryOptimizationIgnored()) "Battery Optimized" else "Disable Battery Optimization")
+                    }
+
+                    HelpItem("🚀 Background Start", "Android 14+ requires 'Display over other apps' permission to start recording from SMS or Shake while the app is in the background.")
+
+                    Button(
+                        onClick = { 
+                            (context as? androidx.fragment.app.FragmentActivity)?.let { 
+                                permissionManager.requestOverlayPermission(it) 
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        enabled = !permissionManager.canDrawOverlays()
+                    ) {
+                        Text(if (permissionManager.canDrawOverlays()) "Background Start Ready" else "Enable Background Start")
+                    }
+                    
+                    HelpItem("📁 Private Storage", "Recordings are saved in private app storage. Use the 'Save to Downloads' option in the file menu to export them to your public gallery.")
                 }
             },
             confirmButton = { TextButton(onClick = { showHelpDialog = false }) { Text("Got it") } }
@@ -108,144 +147,159 @@ fun HomeScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val action = when (recordingMode) {
-                        "VIDEO" -> RecordingService.ACTION_START_VIDEO
-                        "PHOTO" -> RecordingService.ACTION_START_PHOTO
-                        "AUDIO" -> RecordingService.ACTION_START_AUDIO
-                        else -> RecordingService.ACTION_START_VIDEO
-                    }
-                    val intent = Intent(context, RecordingService::class.java).apply {
-                        this.action = action
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        context.startForegroundService(intent)
-                    } else {
-                        context.startService(intent)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.RadioButtonChecked, contentDescription = "Start", tint = Color.White)
-            }
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+        var visible by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) { visible = true }
+
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(500)) + slideInVertically(initialOffsetY = { it / 10 }),
+            modifier = Modifier.padding(paddingValues)
         ) {
-            // Control Panel
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Quick Controls", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        ControlChip("Mode: $recordingMode", Icons.Default.Videocam) {
-                             val next = when(recordingMode) {
-                                 "VIDEO" -> "PHOTO"
-                                 "PHOTO" -> "AUDIO"
-                                 else -> "VIDEO"
-                             }
-                             scope.launch { prefs.setRecordingMode(next) }
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Control Panel
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .animateContentSize(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Quick Controls", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            ControlChip("Mode: $recordingMode", Icons.Default.Videocam) {
+                                 val next = when(recordingMode) {
+                                     "VIDEO" -> "PHOTO"
+                                     "PHOTO" -> "AUDIO"
+                                     else -> "VIDEO"
+                                 }
+                                 scope.launch { prefs.setRecordingMode(next) }
+                            }
+                            
+                            ControlChip("Cam: $cameraSelection", Icons.Default.Camera) {
+                                val next = when(cameraSelection) {
+                                    "PRIMARY" -> "SECONDARY"
+                                    "SECONDARY" -> "FRONT"
+                                    else -> "PRIMARY"
+                                }
+                                scope.launch { prefs.setCameraSelection(next) }
+                            }
                         }
                         
-                        ControlChip("Cam: $cameraSelection", Icons.Default.Camera) {
-                            val next = when(cameraSelection) {
-                                "PRIMARY" -> "SECONDARY"
-                                "SECONDARY" -> "FRONT"
-                                else -> "PRIMARY"
-                            }
-                            scope.launch { prefs.setCameraSelection(next) }
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        ControlChip("Zoom: ${String.format("%.1f", zoomLevel)}x", Icons.Default.ZoomIn) {
-                            val next = if (zoomLevel >= 10f) 1f else zoomLevel + 1.0f
-                            scope.launch { prefs.setZoomLevel(next) }
-                        }
-                        ControlChip("Focus: $focusMode", Icons.Default.FilterCenterFocus) {
-                            val next = if (focusMode == "AUTO") "MANUAL" else "AUTO"
-                            scope.launch { prefs.setFocusMode(next) }
-                        }
-                    }
-
-                    if (recordingMode == "PHOTO") {
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Photo Interval: ${photoInterval}s", 
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                        Slider(
-                            value = photoInterval.toFloat(),
-                            onValueChange = { scope.launch { prefs.setPhotoInterval(it.toInt()) } },
-                            valueRange = 1f..60f,
-                            steps = 59,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                    }
-                    
-                    Button(
-                        onClick = {
-                            val intent = Intent(context, RecordingService::class.java).apply {
-                                action = RecordingService.ACTION_STOP
+                        
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            ControlChip("Zoom: ${String.format(Locale.getDefault(), "%.1f", zoomLevel)}x", Icons.Default.ZoomIn) {
+                                val next = if (zoomLevel >= 10f) 1f else zoomLevel + 1.0f
+                                scope.launch { prefs.setZoomLevel(next) }
                             }
-                            context.startService(intent)
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text("Stop Recording")
-                    }
-                }
-            }
+                            ControlChip("Focus: $focusMode", Icons.Default.FilterCenterFocus) {
+                                val next = if (focusMode == "AUTO") "MANUAL" else "AUTO"
+                                scope.launch { prefs.setFocusMode(next) }
+                            }
+                        }
 
-            Text(
-                "Recent Recordings",
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            if (recordings.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No recordings found", color = Color.Gray)
-                }
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(recordings) { file ->
-                        RecordingItem(
-                            file = file, 
-                            onDelete = { fileToDelete = it },
-                            onSave = {
-                                val feature = when {
-                                    file.name.contains("VID") -> "Video"
-                                    file.name.contains("AUD") -> "Audio"
-                                    else -> "Photo"
-                                }
-                                val uri = fileManager.saveToDownloads(file, feature)
-                                scope.launch {
-                                    if (uri != null) {
-                                        snackbarHostState.showSnackbar("Saved to Downloads/Background Recorder")
-                                    } else {
-                                        snackbarHostState.showSnackbar("Failed to save file")
+                        AnimatedVisibility(visible = recordingMode == "PHOTO") {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "Photo Interval: ${photoInterval}s", 
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                                Slider(
+                                    value = photoInterval.toFloat(),
+                                    onValueChange = { scope.launch { prefs.setPhotoInterval(it.toInt()) } },
+                                    valueRange = 1f..60f,
+                                    steps = 59,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                            }
+                        }
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    val action = when (recordingMode) {
+                                        "VIDEO" -> RecordingService.ACTION_START_VIDEO
+                                        "PHOTO" -> RecordingService.ACTION_START_PHOTO
+                                        "AUDIO" -> RecordingService.ACTION_START_AUDIO
+                                        else -> RecordingService.ACTION_START_VIDEO
                                     }
-                                }
+                                    val intent = Intent(context, RecordingService::class.java).apply {
+                                        this.action = action
+                                    }
+                                    context.startForegroundService(intent)
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Icon(Icons.Default.RadioButtonChecked, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Start")
                             }
-                        )
+
+                            Button(
+                                onClick = {
+                                    val intent = Intent(context, RecordingService::class.java).apply {
+                                        action = RecordingService.ACTION_STOP
+                                    }
+                                    context.startService(intent)
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Icon(Icons.Default.Stop, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Stop")
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    "Recent Recordings",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (recordings.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No recordings found", color = Color.Gray)
+                    }
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(recordings, key = { it.absolutePath }) { file ->
+                            Box(modifier = Modifier.animateItem()) {
+                                RecordingItem(
+                                    file = file, 
+                                    onDelete = { fileToDelete = it },
+                                    onSave = {
+                                        val feature = when {
+                                            file.name.contains("VID") -> "Video"
+                                            file.name.contains("AUD") -> "Audio"
+                                            else -> "Photo"
+                                        }
+                                        val serviceIntent = Intent(context, FileExportService::class.java).apply {
+                                            putExtra("file_path", file.absolutePath)
+                                            putExtra("file_type", feature)
+                                        }
+                                        context.startForegroundService(serviceIntent)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Export started in background...")
+                                        }
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }

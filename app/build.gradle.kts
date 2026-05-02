@@ -8,14 +8,14 @@ plugins {
 
 android {
     namespace = "com.ap.background.recorder"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.ap.background.recorder"
         minSdk = 31
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0(31-03-26)"
+        targetSdk = 37
+        versionCode = 2
+        versionName = "2.0.0(02-05-26)"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
